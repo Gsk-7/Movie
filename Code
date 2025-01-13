@@ -1,0 +1,163 @@
+from transformers import CLIPProcessor, CLIPModel
+from PIL import Image
+import requests
+
+# Load the CLIP model and processor
+model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
+# Example image and text inputs
+image_url = "https://image.tmdb.org/t/p/w500/ojDg0PGvs6R9xYFodRct2kdI6wC.jpg"  # Example movie poster
+image = Image.open(requests.get(image_url, stream=True).raw)
+
+texts = ["A sci-fi movie poster", "An action movie", "A romantic movie"]
+
+# Process inputs
+inputs = processor(text=texts, images=image, return_tensors="pt", padding=True)
+
+# Perform inference
+outputs = model(**inputs)
+logits_per_image = outputs.logits_per_image  # Image-text similarity scores
+probs = logits_per_image.softmax(dim=1)  # Convert to probabilities
+
+# Output results
+for text, prob in zip(texts, probs[0]):
+    print(f"{text}: {prob:.4f}")
+
+
+    ....................................................................................
+
+
+
+
+    import pandas as pd
+
+# Load the dataset
+file_path = 'C:/Users/gowri/OneDrive/Desktop/Movie/Movie.csv'
+dataset = pd.read_csv(file_path)
+
+# Display basic information
+print(dataset.info())  # Shows data types, non-null counts, etc.
+print(dataset.head())  # Displays the first few rows
+
+# List of essential columns to keep
+essential_columns = ['title', 'release_date', 'genres', 'poster_path', 'overview', 'id']
+
+# Create a new dataset containing only these columns
+cleaned_dataset = dataset[essential_columns]
+
+# Optionally, convert the release_date to just the year
+cleaned_dataset['year'] = pd.to_datetime(cleaned_dataset['release_date'], errors='coerce').dt.year
+
+# Drop rows with missing values in essential columns
+cleaned_dataset = cleaned_dataset.dropna(subset=['title', 'poster_path'])
+
+# Fill missing values in 'overview' and 'genres' with placeholders
+cleaned_dataset['overview'] = cleaned_dataset['overview'].fillna('No Overview')
+cleaned_dataset['genres'] = cleaned_dataset['genres'].fillna('Unknown')
+
+# Save the cleaned dataset
+cleaned_dataset.to_csv('cleaned_movie_dataset.csv', index=False)
+print("Cleaned dataset saved successfully!")
+
+# Drop the release_date column
+cleaned_dataset = cleaned_dataset.drop(columns=['release_date'])
+
+# Verify the columns in the cleaned dataset
+print(cleaned_dataset.columns)
+
+# Overwrite the original dataset
+cleaned_dataset.to_csv('C:/Users/gowri/OneDrive/Desktop/Movie/Movie.csv', index=False)
+
+# Check for missing values in the cleaned dataset
+missing_values = cleaned_dataset.isnull().sum()
+
+# Print the missing values count
+print("Missing values in each column:")
+print(missing_values)
+
+
+import os
+import requests
+
+def download_images(dataset, image_column, output_folder):
+    os.makedirs(output_folder, exist_ok=True)
+    
+    # Loop through the dataset to download images
+    for _, row in dataset.iterrows():
+        image_path = row[image_column]  # Get the poster_path
+        if pd.notna(image_path):  # Ensure the image path is not NaN
+            # Construct the full image URL
+            image_url = f"https://image.tmdb.org/t/p/w500{image_path}"
+            
+            # Get the image name from the URL (filename)
+            image_name = image_url.split("/")[-1]
+            image_save_path = os.path.join(output_folder, image_name)
+            
+            # Download and save the image
+            try:
+                response = requests.get(image_url)
+                if response.status_code == 200:  # Check if the request was successful
+                    with open(image_save_path, 'wb') as file:
+                        file.write(response.content)
+                    print(f"Downloaded {image_name}")  # Print the image name after downloading
+                else:
+                    print(f"Failed to download image: {image_url}")
+            except Exception as e:
+                print(f"Error downloading {image_url}: {e}")
+
+# Example usage
+download_images(cleaned_dataset, 'poster_path', 'movie_images')
+
+
+.....................................................................................................
+
+
+
+import pandas as pd
+import os
+import requests
+
+# Load the dataset
+file_path = 'C:/Users/gowri/OneDrive/Desktop/Movie/Movie.csv'
+dataset = pd.read_csv(file_path)
+
+# Display basic information
+print(dataset.info())  # Shows data types, non-null counts, etc.
+print(dataset.head())  # Displays the first few rows
+
+
+
+def download_images(dataset, image_column, output_folder, num_images=5):
+    # Create the output folder if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+    
+    # Limit the dataset to the first 'num_images' rows
+    subset = dataset.head(num_images)
+    
+    # Loop through the subset to download images
+    for _, row in subset.iterrows():
+        image_path = row[image_column]  # Get the poster_path
+        if pd.notna(image_path):  # Ensure the image path is not NaN
+            # Construct the full image URL
+            image_url = f"https://image.tmdb.org/t/p/w500{image_path}"
+            
+            # Get the image name from the URL (filename)
+            image_name = image_url.split("/")[-1]
+            image_save_path = os.path.join(output_folder, image_name)
+            
+            # Download and save the image
+            try:
+                response = requests.get(image_url)
+                if response.status_code == 200:  # Check if the request was successful
+                    with open(image_save_path, 'wb') as file:
+                        file.write(response.content)
+                    print(f"Downloaded {image_name}")  # Print the image name after downloading
+                else:
+                    print(f"Failed to download image: {image_url}")
+            except Exception as e:
+                print(f"Error downloading {image_url}: {e}")
+
+# Example usage (only download images for the first 5 movies):
+download_images(dataset, 'poster_path', 'movie_images', num_images=5)
+...............................................................................................
